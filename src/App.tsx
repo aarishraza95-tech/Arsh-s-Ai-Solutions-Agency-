@@ -15,6 +15,7 @@ import { Footer } from './components/Footer';
 import { LegalModal } from './components/LegalModals';
 import { AgencyConfigModal } from './components/AgencyConfigModal';
 import { PublishingGuideModal } from './components/PublishingGuideModal';
+import { ChatWidget } from './components/ChatWidget';
 import { getAgencyConfig } from './config/agency';
 import { AgencyConfig } from './types';
 
@@ -136,6 +137,8 @@ export default function App() {
         onClose={() => setIsGuideModalOpen(false)}
         config={config}
       />
+
+      <ChatWidget />
     </div>
   );
 }
