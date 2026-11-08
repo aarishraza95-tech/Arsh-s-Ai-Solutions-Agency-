@@ -18,9 +18,10 @@ export default async function handler(req: any, res: any) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
-  if (!apiKey) {
-    return res.status(503).json({ error: 'AI setup is not finished yet. The website owner needs to add GEMINI_API_KEY in Vercel project environment variables.' });
+  const groqKey = process.env.GROQ_API_KEY;
+  const geminiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+  if (!groqKey && !geminiKey) {
+    return res.status(503).json({ error: 'AI setup is incomplete. Add GROQ_API_KEY in Vercel to enable the alternate AI provider.' });
   }
 
   try {
@@ -30,27 +31,65 @@ export default async function handler(req: any, res: any) {
       .slice(-12);
     if (!messages.length) return res.status(400).json({ error: 'Please enter a message.' });
 
-    const contents = messages.map((item: any) => ({
-      role: item.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: item.content.slice(0, 2000) }]
+    const conversation = messages.map((item: any) => ({
+      role: item.role,
+      content: item.content.slice(0, 2000)
     }));
 
-    const ai = new GoogleGenAI({ apiKey });
-    const response = await ai.models.generateContent({
-      model: 'gemini-3.8-flash',
-      contents,
-      config: {
-        systemInstruction: SYSTEM_INSTRUCTION,
-        maxOutputTokens: 500,
-        temperature: 0.4
+    // Prefer Groq; fall back to Gemini if Groq is not configured or temporarily unavailable.
+    if (groqKey) {
+      try {
+        const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${groqKey}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: 'openai/gpt-oss-20b',
+            messages: [{ role: 'system', content: SYSTEM_INSTRUCTION }, ...conversation],
+            max_tokens: 500,
+            temperature: 0.4
+          }),
+          signal: AbortSignal.timeout(15000)
+        });
+        const groqData = await groqResponse.json();
+        if (groqResponse.ok) {
+          const reply = groqData.choices?.[0]?.message?.content;
+          if (typeof reply === 'string' && reply.trim()) {
+            return res.status(200).json({ reply: reply.trim(), provider: 'groq' });
+          }
+        }
+        console.error('Groq API error:', groqResponse.status, groqData?.error || groqData);
+      } catch (groqError) {
+        console.error('Groq request failed:', groqError);
       }
-    });
-    return res.status(200).json({ reply: response.text || 'Sorry, I could not prepare a reply. Please try again.' });
+    }
+
+    if (geminiKey) {
+      const ai = new GoogleGenAI({ apiKey: geminiKey });
+      const contents = conversation.map((item: any) => ({
+        role: item.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: item.content }]
+      }));
+      const response = await ai.models.generateContent({
+        model: 'gemini-3.8-flash',
+        contents,
+        config: {
+          systemInstruction: SYSTEM_INSTRUCTION,
+          maxOutputTokens: 500,
+          temperature: 0.4
+        }
+      });
+      return res.status(200).json({ reply: response.text || 'Sorry, I could not prepare a reply.', provider: 'gemini' });
+    }
+
+    return res.status(503).json({ error: 'The alternate AI provider is temporarily unavailable. Please try again shortly.' });
   } catch (error: any) {
     console.error('Chat API error:', error);
     const status = Number(error?.status || error?.error?.code || 0);
     if (status === 503 || status === 429) {
-      return res.status(503).json({ error: 'Our AI service is temporarily busy. Please wait 20 seconds and send your message again. Your chat is still available.' });
+      return res.status(503).json({ error: 'Our AI services are temporarily busy. Please try again shortly.' });
     }
     return res.status(500).json({ error: 'The AI assistant could not reply right now. Please try again shortly.' });
   }
