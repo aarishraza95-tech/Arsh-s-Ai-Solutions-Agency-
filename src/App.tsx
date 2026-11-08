@@ -18,6 +18,7 @@ import { PublishingGuideModal } from './components/PublishingGuideModal';
 import { ChatWidget } from './components/ChatWidget';
 import { getAgencyConfig } from './config/agency';
 import { AgencyConfig } from './types';
+import RudraDentalPage from './RudraDentalPage';
 
 export default function App() {
   const [config, setConfig] = useState<AgencyConfig>(getAgencyConfig());
@@ -62,6 +63,10 @@ export default function App() {
       elem.scrollIntoView({ behavior: 'smooth' });
     }
   };
+
+  if (window.location.pathname === '/rudra-dental' || window.location.pathname === '/rudra-dental/') {
+    return <RudraDentalPage />;
+  }
 
   return (
     <div className="min-h-screen bg-[#080B14] text-slate-100 flex flex-col font-sans selection:bg-purple-600 selection:text-white">
