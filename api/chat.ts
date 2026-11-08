@@ -20,9 +20,6 @@ export default async function handler(req: any, res: any) {
 
   const groqKey = process.env.GROQ_API_KEY;
   const geminiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
-  if (!groqKey && !geminiKey) {
-    return res.status(503).json({ error: 'AI setup is incomplete. Add GROQ_API_KEY in Vercel to enable the alternate AI provider.' });
-  }
 
   try {
     const input = Array.isArray(req.body?.messages) ? req.body.messages : [];
@@ -36,7 +33,7 @@ export default async function handler(req: any, res: any) {
       content: item.content.slice(0, 2000)
     }));
 
-    // Prefer Groq; fall back to Gemini if Groq is not configured or temporarily unavailable.
+    // Groq is the primary provider. Never wait indefinitely on a second provider.
     if (groqKey) {
       try {
         const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -53,7 +50,7 @@ export default async function handler(req: any, res: any) {
           }),
           signal: AbortSignal.timeout(15000)
         });
-        const groqData = await groqResponse.json();
+        const groqData = await groqResponse.json().catch(() => ({}));
         if (groqResponse.ok) {
           const reply = groqData.choices?.[0]?.message?.content;
           if (typeof reply === 'string' && reply.trim()) {
@@ -61,8 +58,10 @@ export default async function handler(req: any, res: any) {
           }
         }
         console.error('Groq API error:', groqResponse.status, groqData?.error || groqData);
-      } catch (groqError) {
+        return res.status(503).json({ error: 'Our AI assistant is temporarily unavailable. Please try again shortly or contact us on WhatsApp.' });
+      } catch (groqError: any) {
         console.error('Groq request failed:', groqError);
+        return res.status(503).json({ error: 'Our AI assistant timed out. Please try again or contact us on WhatsApp.' });
       }
     }
 
@@ -72,19 +71,29 @@ export default async function handler(req: any, res: any) {
         role: item.role === 'assistant' ? 'model' : 'user',
         parts: [{ text: item.content }]
       }));
-      const response = await ai.models.generateContent({
-        model: 'gemini-3.8-flash',
-        contents,
-        config: {
-          systemInstruction: SYSTEM_INSTRUCTION,
-          maxOutputTokens: 500,
-          temperature: 0.4
-        }
-      });
-      return res.status(200).json({ reply: response.text || 'Sorry, I could not prepare a reply.', provider: 'gemini' });
+      let timeoutId: ReturnType<typeof setTimeout> | undefined;
+      try {
+        const response = await Promise.race([
+          ai.models.generateContent({
+            model: 'gemini-3.8-flash',
+            contents,
+            config: {
+              systemInstruction: SYSTEM_INSTRUCTION,
+              maxOutputTokens: 500,
+              temperature: 0.4
+            }
+          }),
+          new Promise<never>((_, reject) => {
+            timeoutId = setTimeout(() => reject(new Error('Gemini request timed out')), 20000);
+          })
+        ]);
+        return res.status(200).json({ reply: response.text || 'Sorry, I could not prepare a reply.', provider: 'gemini' });
+      } finally {
+        if (timeoutId) clearTimeout(timeoutId);
+      }
     }
 
-    return res.status(503).json({ error: 'The alternate AI provider is temporarily unavailable. Please try again shortly.' });
+    return res.status(503).json({ error: 'AI setup is incomplete. Add GROQ_API_KEY in Vercel to enable the assistant.' });
   } catch (error: any) {
     console.error('Chat API error:', error);
     const status = Number(error?.status || error?.error?.code || 0);
