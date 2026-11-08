@@ -40,7 +40,7 @@ export function ChatWidget() {
   return (
     <div className="fixed bottom-5 right-5 z-[100] font-sans">
       {open && (
-        <section className="mb-3 flex h-[min( min(  min(  620px, 78vh), 78vh), 78vh)] w-[min( calc(100vw-2.5rem), 390px)] flex-col overflow-hidden rounded-2xl border border-purple-400/30 bg-[#0c1222] shadow-2xl shadow-black/50" aria-label="AI chat">
+        <section className="mb-3 flex h-[min(620px,78vh)] w-[min( calc(100vw-2.5rem), 390px)] flex-col overflow-hidden rounded-2xl border border-purple-400/30 bg-[#0c1222] shadow-2xl shadow-black/50" aria-label="AI chat">
           <header className="flex items-center justify-between bg-gradient-to-r from-indigo-700 to-purple-700 px-4 py-3">
             <div className="flex items-center gap-3">
               <div className="rounded-full bg-white/15 p-2"><Bot size={20} /></div>
