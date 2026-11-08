@@ -46,8 +46,12 @@ export default async function handler(req: any, res: any) {
       }
     });
     return res.status(200).json({ reply: response.text || 'Sorry, I could not prepare a reply. Please try again.' });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Chat API error:', error);
+    const status = Number(error?.status || error?.error?.code || 0);
+    if (status === 503 || status === 429) {
+      return res.status(503).json({ error: 'Our AI service is temporarily busy. Please wait 20 seconds and send your message again. Your chat is still available.' });
+    }
     return res.status(500).json({ error: 'The AI assistant could not reply right now. Please try again shortly.' });
   }
 }
