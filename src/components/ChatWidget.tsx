@@ -22,16 +22,27 @@ export function ChatWidget() {
     setError('');
     setLoading(true);
     try {
-      const response = await fetch('/api/chat', {
+      const controller = new AbortController();
+      const timeoutId = window.setTimeout(() => controller.abort(), 18000);
+      let response: Response;
+      try {
+        response = await fetch('/api/chat', {
         method: 'POST',
+        signal: controller.signal,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: next.slice(-12).map(({ role, text }) => ({ role, content: text })) })
-      });
+        });
+      } finally {
+        window.clearTimeout(timeoutId);
+      }
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'The assistant is temporarily unavailable.');
       setMessages(current => [...current, { role: 'assistant', text: data.reply }]);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Please try again in a moment.');
+      const message = err instanceof Error && err.name === 'AbortError'
+        ? 'The AI is taking too long to respond. Please try again in a moment.'
+        : err instanceof Error ? err.message : 'Please try again in a moment.';
+      setError(message);
     } finally {
       setLoading(false);
     }
