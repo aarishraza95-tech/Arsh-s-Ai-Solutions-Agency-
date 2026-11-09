@@ -3,16 +3,16 @@ import { AgencyConfig, ServiceItem, PricingPlan, FAQItem } from '../types';
 export const DEFAULT_AGENCY_CONFIG: AgencyConfig = {
   agencyName: "ARSH'S AI SOLUTION AGENCY",
   ownerName: "Arsh",
-  email: "aarishraza865@gmail.com",
-  whatsappNumber: "15550198234", // Replaceable in UI config modal or environment
-  whatsappDisplay: "+1 (555) 019-8234",
+  email: "aarishraza95@gmail.com",
+  whatsappNumber: "917906123580",
+  whatsappDisplay: "+91 7906123580",
   location: "Global Remote Delivery · Dedicated Enterprise Operations",
-  operatingHours: "Monday – Saturday, 08:00 – 20:00 (EST / UTC-5)",
+  operatingHours: "Monday – Saturday, 08:00 – 20:00 (IST / UTC+5:30)",
   responseSla: "Within 2 Hours (Priority WhatsApp) / Under 24 Hours (Email)",
   webhookUrl: ""
 };
 
-const STORAGE_KEY = 'arsh_agency_config_v1';
+const STORAGE_KEY = 'arsh_agency_config_v2';
 
 export function getAgencyConfig(): AgencyConfig {
   if (typeof window === 'undefined') return DEFAULT_AGENCY_CONFIG;
