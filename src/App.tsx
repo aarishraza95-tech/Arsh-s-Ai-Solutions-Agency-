@@ -18,6 +18,7 @@ import { PublishingGuideModal } from './components/PublishingGuideModal';
 import { getAgencyConfig } from './config/agency';
 import { AgencyConfig } from './types';
 import RudraDentalPage from './RudraDentalPage';
+import AIChatWidget from './components/AIChatWidget';
 
 export default function App() {
   const [config, setConfig] = useState<AgencyConfig>(getAgencyConfig());
@@ -142,6 +143,7 @@ export default function App() {
         config={config}
       />
 
+      <AIChatWidget />
     </div>
   );
 }
