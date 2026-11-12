@@ -15,7 +15,6 @@ import { Footer } from './components/Footer';
 import { LegalModal } from './components/LegalModals';
 import { AgencyConfigModal } from './components/AgencyConfigModal';
 import { PublishingGuideModal } from './components/PublishingGuideModal';
-import { ChatWidget } from './components/ChatWidget';
 import { getAgencyConfig } from './config/agency';
 import { AgencyConfig } from './types';
 import RudraDentalPage from './RudraDentalPage';
@@ -143,7 +142,6 @@ export default function App() {
         config={config}
       />
 
-      <ChatWidget />
     </div>
   );
 }
