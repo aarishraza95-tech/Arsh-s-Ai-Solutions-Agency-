@@ -38,7 +38,7 @@ export default function AIChatWidget() {
   return (
     <div className="fixed bottom-5 right-5 z-[100] font-sans">
       {open && (
-        <section className="mb-3 flex h-[min( min(640px, calc(100dvh - 110px)), 560px)] w-[min(360px,calc(100vw - 32px))] flex-col overflow-hidden rounded-2xl border border-slate-700 bg-[#0D1424] shadow-2xl" aria-label="AI chat">
+        <section className="mb-3 flex h-[min(560px,calc(100dvh-110px))] w-[min(360px,calc(100vw - 32px))] flex-col overflow-hidden rounded-2xl border border-slate-700 bg-[#0D1424] shadow-2xl" aria-label="AI chat">
           <header className="flex items-center justify-between border-b border-slate-700 bg-[#111C31] p-4">
             <div className="flex items-center gap-3">
               <span className="rounded-xl bg-purple-600 p-2"><Bot size={20} /></span>
