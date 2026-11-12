@@ -23,7 +23,7 @@ export default function AIChatWidget() {
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text, history: next.slice(-9, -1) })
+        body: JSON.stringify({ messages: next.slice(-12).map(item => ({ role: item.role, content: item.text })) })
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'The assistant is temporarily unavailable.');
